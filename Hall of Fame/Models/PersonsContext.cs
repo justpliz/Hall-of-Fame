@@ -14,7 +14,7 @@ namespace Hall_of_Fame.Models
             public PersonsContext(DbContextOptions<PersonsContext> options)
                 : base(options)
             {
-                Database.EnsureCreated();
+                Database.Migrate();
             }
     }
 }

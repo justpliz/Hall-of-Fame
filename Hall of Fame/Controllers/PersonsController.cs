@@ -1,102 +1,103 @@
 ﻿using Hall_of_Fame.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-using System;
+using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
-using Hall_of_Fame;
 using Hall_of_Fame.Models.Data;
-using System.Web.Http;
 
 namespace Hall_of_Fame.Controllers
 {
+
+    [ApiController]
+    [Route("api/v1")]
     public class PersonsController : ControllerBase
     {
 
-{
-    [ApiController]
-    [Route("api/[controller]")]
-    /*    public class UsersController : ControllerBase
-       {
-
-           PersonsContext db;
-           public UsersController(PersonsContext context)
+           private readonly PersonsContext _db;
+           public PersonsController(PersonsContext context)
            {
-               db = context;
-               if (!db.Persons.Any())
-               {
-                   db.Persons.Add(new Person { Name = "Tom", DisplayName = "Cruise" });
-                   db.Persons.Add(new Person { Name = "Alice", DisplayName = "ICM" });
-                   db.SaveChanges();
-               }
-           } */
+               _db = context;
+           }
 
-        [HttpGet]
+        //GET api/v1/persons
+        //Возвращает массив объектов типа Person
+        [HttpGet("persons")]
         public async Task<ActionResult<IEnumerable<Person>>> Get()
         {
-            return await db.Persons.ToListAsync();
+            if (!_db.Persons.Any())
+                return NotFound();
+            else
+                return await _db.Persons.Include(item => item.Skills).ToListAsync();
         }
 
-        // GET api/v1/persons
-        [HttpGet("{id}")]
+        //GET api/v1/person/[id]
+        //Возвращает объект типа Person.
+        [HttpGet("person/{id}")]
         public async Task<ActionResult<Person>> Get(int id)
         {
-            Person user = await db.Persons.FirstOrDefaultAsync(x => x.Id == id);
+            Person person = await _db.Persons.Include(item => item.Skills).FirstOrDefaultAsync(x => x.Id == id);
             if (person == null)
                 return NotFound();
             return new ObjectResult(person);
         }
 
-        public IHttpActionResult GetAllStudents()
-        {
-            IList<Person> persons = null;
 
-            using (var ctx = new PersonDBEntity())
-            {
-                persons = ctx.Persons.Include("Skill")
-                    .Select(s => new Person()
-                    {
-                        Id = s.PersonId
-                        Name = s.Name,
-                        DisplayName = s.DisplayName
-                    }).ToList<Skill>();
-            }
-
-            if (persons.Count == 0)
-            {
-                return NotFoundResult();
-            }
-
-            return OkResult(persons);
-        }
-
-
-        // PUT api/v1/person/[id]
-        [HttpPut("person/{Id}")]
-        //Редактирует данные сотрудника с указанным id
-        public async Task<ActionResult<Person>> EditPerson([FromBody] Person person)
+        //PUT api/v1/person/[id]
+        //Обновляет данные сотрудника
+        [HttpPut("person/{id}")]
+        public async Task<ActionResult<Person>> EditPerson(Person person, int id)
         {
             if (person == null)
             {
                 return BadRequest();
             }
 
-            if (!db.Persons.Any(x => x.Id == person.Id))
+            if (!_db.Persons.Any(x => x.Id == id))
             {
                 return NotFound();
             }
 
+            _db.Persons.Attach(person);
+            _db.Entry(person).Property(x => x.Name).IsModified = true;
+            _db.Entry(person).Property(x => x.DisplayName).IsModified = true;
+            await _db.SaveChangesAsync();
+            return Ok(person);
+        }
 
-            db.Persons.Update(person);
-            await db.SaveChangesAsync();
+        //POST api/v1/person
+        //Создаёт нового сотрудника
+        [HttpPost("person")]
+        public async Task<ActionResult<Person>> AddPerson(Person person)
+        {
+            if (person == null)
+            {
+                return BadRequest();
+            }
+
+            _db.Persons.Attach((person));
+            _db.Entry(person).Property(x => x.Name).IsModified = true;
+            _db.Entry(person).Property(x => x.DisplayName).IsModified = true;
+            await _db.SaveChangesAsync();
             return Ok(person);
         }
 
 
+        //DELETE api/v1/person/[id]
+        //Удаляет с указанным id сотрудника из системы.
+        [HttpDelete("person/{id}")]
+        public async Task<ActionResult<Person>> DeletePerson(int id)
+        {
+            Person person = _db.Persons.Include(item => item.Skills).FirstOrDefault(x => x.Id == id);
+            if (person == null)
+            {
+                return NotFound();
+            }
+            _db.Persons.Remove(person);
+            await _db.SaveChangesAsync();
+            return Ok(person);
+        }
+
     }
 }
 
-}
-}

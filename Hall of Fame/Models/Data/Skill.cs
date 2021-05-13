@@ -8,14 +8,13 @@ namespace Hall_of_Fame.Models.Data
 {
     public class Skill
     {
-
+        //Создание модели Skill
         public string Name { get; set; }
 
         public byte Level { get; set; }
 
         public long PersonId { get; set; }
 
-        public virtual Person Person { get; set; }
         public long Id { get; set; }
     }
 }

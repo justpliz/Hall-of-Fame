@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 
 namespace Hall_of_Fame.Models.Data
 {
+    //Создание модели Person
     public class Person
     {
         public long Id { get; set; }

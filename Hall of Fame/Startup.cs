@@ -27,14 +27,15 @@ namespace Hall_of_Fame
         {
             // получаем строку подключения из файла конфигурации
             string connection = Configuration.GetConnectionString("DefaultConnection");
-            // добавляем контекст MobileContext в качестве сервиса в приложение
+            // добавляем контекст PersonsContext в качестве сервиса в приложение
             services.AddDbContext<PersonsContext>(options =>
                 options.UseSqlServer(connection));
             services.AddControllers();
+            // Inject an implementation of ISwaggerProvider with defaulted settings applied
             services.AddSwaggerGen();
             services.AddDbContext<PersonsContext>(options => options.UseSqlServer(connection));
-
             services.AddControllers();
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -43,7 +44,9 @@ namespace Hall_of_Fame
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+                // Enable middleware to serve generated Swagger as a JSON endpoint
                 app.UseSwagger();
+                // Enable middleware to serve swagger-ui assets (HTML, JS, CSS etc.)
                 app.UseSwaggerUI(c =>
                 {
                     c.SwaggerEndpoint("/swagger/v1/swagger.json", "Hall Of fame");
